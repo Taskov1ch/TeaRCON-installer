@@ -1,17 +1,26 @@
 ### Для установки введите эти команды в терминал пошагово.
 
-`apt -y update && apt -y upgrade`
-
-`apt install wget`
-
-`wget -qO- https://github.com/Taskov1ch/TeaRCON-installer/releases/download/v0.1/installer.sh | sudo bash`
+```bash
+apt -y update && apt -y upgrade
+```
+```bash
+apt install wget
+```
+```bash
+wget -qO- wget -qO- $(curl -s https://api.github.com/repos/Taskov1ch/TeaRCON-installer/releases/latest | grep "browser_download_url.*installer.sh" | cut -d '"' -f 4) | sudo bash
+```
 ___
 **или же**
 ___
-`apt -y update && apt -y upgrade`
+```bash
+apt -y update && apt -y upgrade
+```
 
 *(установите скрипт **installer.sh** локально в нужный вам каталог сервера)*
 
-`chmod +x installer.sh`
-
-`./installer.sh`
+```bash
+chmod +x installer.sh
+```
+```bash
+./installer.sh
+```
