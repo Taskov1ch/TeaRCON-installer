@@ -1,9 +1,11 @@
 #!/bin/bash
 
+echo -e "Этот установщик не является официальным и не связан с разработчиками TeaRCON.\nАвтор скрипта не имеет никакого отношения к создателям оригинального программного обеспечения.\nПросьба не путать меня с автором оригинального ПО."
+
 # Цвета для вывода
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
+YELLOW='\033[1;33m'
 NC='\033[0m'
 
 # Переменная для хранения пути к используемому Python
@@ -14,14 +16,14 @@ show_loading_animation() {
 	local pid=$1
 	local delay=0.1
 	local spinstr='|/-\'  # Символы для анимации
+	local msg=$2
 	while kill -0 $pid 2>/dev/null; do
 		local temp=${spinstr#?}
-		printf " [%c]  " "$spinstr"
+		printf "\r${YELLOW}%s [%c]${NC}  " "$msg" "$spinstr"
 		spinstr=$temp${spinstr%"$temp"}
 		sleep $delay
-		printf "\r"  # Возврат в начало строки
 	done
-	printf "\r"  # Стираем анимацию перед выводом следующего текста
+	printf "\r${GREEN}%s [Завершено!]${NC}\n" "$msg"
 }
 
 # Функция для обработки ошибок
@@ -34,9 +36,8 @@ error_exit() {
 trap 'error_exit' ERR
 
 # Удаление всех файлов и папок, кроме самого скрипта
-echo -e "${YELLOW}Удаление всех файлов и папок, кроме самого скрипта разумеется :) ...${NC}"
 find . -mindepth 1 ! -name "$(basename "$0")" -exec rm -rf {} + &
-show_loading_animation $!
+show_loading_animation $! "Удаление всех файлов..."
 
 # Проверка доступной версии Python
 find_available_python() {
@@ -53,7 +54,6 @@ find_available_python() {
 
 # Функция для установки Python и его компонентов
 install_python() {
-	echo -e "${YELLOW}Установка Python и его компонентов...${NC}"
 	(
 		apt update > /dev/null 2>&1 &&
 		apt install -y software-properties-common > /dev/null 2>&1 &&
@@ -61,7 +61,7 @@ install_python() {
 		apt update > /dev/null 2>&1 &&
 		apt install -y python3.10 python3.10-venv python3.10-dev python3.10-distutils python3-pip > /dev/null 2>&1
 	) &
-	show_loading_animation $!
+	show_loading_animation $! "Установка Python..."
 	
 	# Настройка альтернативных команд для Python и pip
 	update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1 > /dev/null 2>&1
@@ -75,20 +75,18 @@ if ! find_available_python; then
 fi
 
 # Установка wget
-if command -v wget &> /dev/null; then
-	echo -e "${GREEN}wget уже установлен.${NC}"
-else
-	echo -e "${YELLOW}Установка wget...${NC}"
+if ! command -v wget &> /dev/null; then
 	apt install -y wget > /dev/null 2>&1 &
-	show_loading_animation $!
+	show_loading_animation $! "Установка wget..."
+else
+	echo -e "${GREEN}wget уже установлен.${NC}"
 fi
 
 # Загрузка последнего релиза TeaRCON
-echo -e "${YELLOW}Загрузка последнего релиза TeaRCON...${NC}"
 latest_release_url=$(curl -s https://api.github.com/repos/teanus/Telegram-RCON-Bot/releases/latest | grep "tarball_url" | cut -d '"' -f 4)
 echo -e "${GREEN}URL последнего релиза: $latest_release_url${NC}"
 wget -O bot.tgz "$latest_release_url" > /dev/null 2>&1 &
-show_loading_animation $!
+show_loading_animation $! "Загрузка последнего релиза..."
 
 # Проверка успешности загрузки
 if [ ! -f bot.tgz ]; then
@@ -97,7 +95,8 @@ if [ ! -f bot.tgz ]; then
 fi
 
 # Распаковка архива
-tar -xzf bot.tgz
+tar -xzf bot.tgz &
+show_loading_animation $! "Распаковка архива..."
 
 # Определение имени распакованной папки
 extracted_folder=$(tar -tzf bot.tgz | head -1 | cut -f1 -d"/")
@@ -107,45 +106,46 @@ if [ -z "$extracted_folder" ]; then
 fi
 
 # Перемещение содержимого в текущую директорию и удаление старой папки
-mv -f "$extracted_folder"/* .
+mv -f "$extracted_folder"/* . &
+show_loading_animation $! "Перемещение файлов..."
 rm -rf "$extracted_folder"
 
 # Удаление старого виртуального окружения (если оно существует)
 if [ -d "venv" ]; then
-	rm -rf venv
+	rm -rf venv &
+	show_loading_animation $! "Удаление старого виртуального окружения..."
 fi
 
 # Создание нового виртуального окружения
-echo -e "${YELLOW}Создание виртуального окружения venv...${NC}"
-apt install -y python3.10-venv > /dev/null 2>&1 &
-show_loading_animation $!
 $PYTHON_EXEC -m venv venv > /dev/null 2>&1 &
-show_loading_animation $!
+show_loading_animation $! "Создание виртуального окружения..."
 
 # Активируем виртуальное окружение
 source venv/bin/activate
 
 # Установка зависимостей из requirements.txt
-echo -e "${YELLOW}Установка зависимостей...${NC}"
 if [ -f "requirements.txt" ]; then
 	pip install -r requirements.txt > /dev/null 2>&1 &
-	show_loading_animation $!
+	show_loading_animation $! "Установка зависимостей..."
 else
 	echo -e "${RED}Файл requirements.txt не найден.${NC}"
 	exit 1
 fi
 
 # Удаление ненужного архива
-rm bot.tgz
+rm bot.tgz &
+show_loading_animation $! "Удаление архива..."
 
 # Создание файла start.sh с командами для активации окружения и запуска бота
-echo -e "${YELLOW}Создание start.sh...${NC}"
-echo "#!/bin/bash" > start.sh
-echo "source venv/bin/activate" >> start.sh
-echo "python bot.py" >> start.sh
+cat << EOF > start.sh
+#!/bin/bash
+source venv/bin/activate
+python bot.py
+EOF
+show_loading_animation $! "Создание start.sh..."
 
 # Сделать файл start.sh исполняемым
 chmod +x start.sh
 
 # Готово!
-echo -e "${GREEN}Установка завершена!\nВы можете запустить бота командой \`./start.sh\`, но перед этим не забудьте его настроить.\nСкрипт создан Taskovich'ем (https://taskovich.pro).\nУдачного использования бота ;)${NC}"
+echo -e "\n${GREEN}Установка завершена!\nВы можете запустить бота командой \`./start.sh\`, но перед этим не забудьте его настроить.\nСкрипт создан Taskovich'ем (https://taskovich.pro).\nУдачного использования бота ;)${NC}\n"
