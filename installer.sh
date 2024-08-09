@@ -5,7 +5,7 @@ echo -e "Этот установщик не является официальн�
 # Цвета для вывода
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
+GREY='\033[1;33m'
 NC='\033[0m'
 
 # Переменная для хранения пути к используемому Python
@@ -19,7 +19,7 @@ show_loading_animation() {
 	local msg=$2
 	while kill -0 $pid 2>/dev/null; do
 		local temp=${spinstr#?}
-		printf "\r${YELLOW}%s [%c]${NC}  " "$msg" "$spinstr"
+		printf "\r${GREY}%s [%c]${NC}  " "$msg" "$spinstr"
 		spinstr=$temp${spinstr%"$temp"}
 		sleep $delay
 	done
