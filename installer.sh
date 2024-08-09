@@ -147,5 +147,17 @@ show_loading_animation $! "Создание start.sh..."
 # Сделать файл start.sh исполняемым
 chmod +x start.sh
 
+# После создания start.sh, запрашиваем токен от Telegram бота
+echo -n "Введите токен от вашего Telegram бота (нажмите Enter для пропуска): "
+read BOT_TOKEN
+
+# Если пользователь ввел токен, создаем файл .env
+if [ -n "$BOT_TOKEN" ]; then
+	echo -e "TOKEN=$BOT_TOKEN" > .env
+	echo -e "${GREEN}Файл .env создан с вашим токеном.${NC}"
+else
+	echo -e "${GREY}Токен не введен. Шаг пропущен.${NC}"
+fi
+
 # Готово!
 echo -e "\n${GREEN}Установка завершена!\nВы можете запустить бота командой \`./start.sh\`, но перед этим не забудьте его настроить.\nСкрипт создан Taskovich'ем (https://taskovich.pro).\nУдачного использования бота ;)${NC}\n"
