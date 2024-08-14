@@ -4,7 +4,7 @@
 apt -y update && apt -y upgrade
 ```
 ```bash
-apt install wget
+apt -y install wget
 ```
 ```bash
 wget -qO- wget -qO- $(curl -s https://api.github.com/repos/Taskov1ch/TeaRCON-installer/releases/latest | grep "browser_download_url.*installer.sh" | cut -d '"' -f 4) | sudo bash
